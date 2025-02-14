@@ -1,9 +1,13 @@
 {
-  "name": "astro-sanity-turbopack-starter",
+  "name": "lp-engine",
   "author": {
-    "name": "Bogumił Milewski",
-    "email": "hello@milewski.me",
-    "url": "https://milewski.me"
+    "name": "Oliwier Sellig",
+    "email": "oliwier@kryptonum.eu",
+    "url": "https://kryptonum.eu"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kryptonum-dev/lp-engine"
   },
   "engines": {
     "node": ">=18"

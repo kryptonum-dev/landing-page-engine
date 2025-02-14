@@ -2,12 +2,47 @@
  * Global declaration of the domain for the application.
  * This constant is used for constructing full URLs and determining external links.
  * @constant
- * @type {string}
  */
 export const DOMAIN: string = 'https://localhost:4321'
-export const PROJECT_ID = import.meta.env.SANITY_PROJECT_ID || '9y6luwc1'
-export const DATASET = 'production'
-export const API_VERSION = '2024-03-05'
-export const PREVIEW_DOMAIN = import.meta.env.SANITY_STUDIO_PREVIEW_DOMAIN || 'lp-engine'
-export const STUDIO_HOST = 'lp-engine'
-export const TITLE = 'LP Engine'
+
+/**
+ * Domain used for preview functionality in development environment.
+ * This constant defines the URL where content previews are rendered.
+ * @constant
+ */
+export const PREVIEW_DOMAIN: string = 'https://localhost:4321'
+
+/**
+ * Sanity project identifier.
+ * Unique ID used to identify and connect to the specific Sanity project.
+ * @constant
+ */
+export const PROJECT_ID: string = '9y6luwc1'
+
+/**
+ * Sanity dataset name.
+ * Identifies which dataset to use within the Sanity project (e.g., production, development).
+ * @constant
+ */
+export const DATASET: string = 'production'
+
+/**
+ * Sanity API version.
+ * Specifies which version of the Sanity API to use for queries and mutations.
+ * @constant
+ */
+export const API_VERSION: string = '2024-03-05'
+
+/**
+ * Studio host identifier.
+ * Used to identify the Sanity Studio instance in the application.
+ * @constant
+ */
+export const STUDIO_HOST: string = 'lp-engine'
+
+/**
+ * Application title.
+ * The main title used throughout the application for branding and display purposes.
+ * @constant
+ */
+export const TITLE: string = 'LP Engine'

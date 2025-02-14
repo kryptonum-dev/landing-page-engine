@@ -1,5 +1,5 @@
 import sitemap from '@astrojs/sitemap'
-import vercel from '@astrojs/vercel/serverless'
+import vercel from '@astrojs/vercel'
 import { defineConfig } from 'astro/config'
 import redirects from './redirects'
 import { DOMAIN } from './src/global/constants'
