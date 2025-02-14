@@ -1,11 +1,10 @@
-import { defineField, defineType } from "sanity"
-import { Tooltip, Box, Text, } from '@sanity/ui';
-import { isValidUrl } from "../../utils/is-valid-url";
-import { InternalLinkableTypes } from "../../structure/internal-linkable-types";
+import { Box, Text, Tooltip } from '@sanity/ui'
+import { defineField, defineType } from 'sanity'
+import { isValidUrl } from '../../utils/is-valid-url'
 
-const name = 'cta';
-const title = 'Call To Action (CTA)';
-const icon = () => '🗣️';
+const name = 'cta'
+const title = 'Call To Action (CTA)'
+const icon = () => '🗣️'
 
 export default defineType({
   name,
@@ -18,7 +17,7 @@ export default defineType({
       type: 'string',
       title: 'Text',
       description: 'The text that will be displayed on the button.',
-      validation: Rule => Rule.required(),
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'theme',
@@ -35,63 +34,29 @@ export default defineType({
         direction: 'horizontal',
       },
       initialValue: 'primary',
-      validation: Rule => Rule.required(),
+      validation: (Rule) => Rule.required(),
       fieldset: 'style',
     }),
     defineField({
-      name: 'linkType',
-      type: 'string',
-      title: 'Type',
-      description: (
-        <>
-          <em>External</em> (other websites) or <em>Internal</em> (within your site)
-        </>
-      ),
-      options: {
-        list: ['external', 'internal'],
-        layout: 'radio',
-        direction: 'horizontal',
-      },
-      initialValue: 'external',
-      validation: Rule => Rule.required(),
-      fieldset: 'style',
-    }),
-    defineField({
-      name: 'external',
+      name: 'href',
       type: 'string',
       title: 'URL',
-      description: 'Specify the full URL. Ensure it starts with "https://" and is a valid URL.',
-      hidden: ({ parent }) => parent?.linkType !== 'external',
+      description:
+        'Enter a URL. Use full URLs starting with "https://" for external links, or start with "/" for internal pages.',
       validation: (Rule) => [
-        Rule.custom((value, { parent }) => {
-          const type = (parent as { type?: string })?.type;
-          if (type === 'external') {
-            if (!value) return "URL is required";
-            if (!value.startsWith('https://')) {
-              return 'External link must start with the "https://" protocol';
-            }
-            if (!isValidUrl(value)) return 'Invalid URL';
+        Rule.required(),
+        Rule.custom((value) => {
+          if (!value) return 'URL is required'
+          if (
+            !value.startsWith('https://') &&
+            !value.startsWith('mailto:') &&
+            !value.startsWith('tel:') &&
+            !value.startsWith('/')
+          ) {
+            return 'Link must start with "https://", "mailto:", "tel:" or "/" for internal pages'
           }
-          return true;
-        }),
-      ],
-    }),
-    defineField({
-      name: 'internal',
-      type: 'reference',
-      title: 'Internal reference to page',
-      description: 'Select an internal page to link to.',
-      to: InternalLinkableTypes,
-      options: {
-        disableNew: true,
-        filter: 'defined(slug.current)',
-      },
-      hidden: ({ parent }) => parent?.linkType !== 'internal',
-      validation: (rule) => [
-        rule.custom((value, { parent }) => {
-          const type = (parent as { type?: string })?.type;
-          if (type === 'internal' && !value?._ref) return "You have to choose internal page to link to.";
-          return true;
+          if (!value.startsWith('/') && !isValidUrl(value)) return 'Invalid URL'
+          return true
         }),
       ],
     }),
@@ -102,35 +67,33 @@ export default defineType({
       title: 'Style',
       options: {
         columns: 2,
-      }
+      },
     },
   ],
   preview: {
     select: {
       title: 'text',
       theme: 'theme',
-      type: 'type',
-      external: 'external',
-      internal: 'internal.slug.current',
+      href: 'href',
     },
-    prepare({ title, theme, type, external, internal }) {
+    prepare({ title, theme, href }) {
       return {
         title: `${title}`,
-        subtitle: type === 'external' ? external : internal,
-        media: () => <Tooltip
-          content={
-            <Box padding={1}>
-              <Text size={1}>
-                {theme === 'primary' ? 'Primary button' : 'Secondary button'}
-              </Text>
-            </Box>
-          }
-          placement="top"
-          portal
-        >
-          <span>{icon()}</span>
-        </Tooltip>
-      };
+        subtitle: href,
+        media: () => (
+          <Tooltip
+            content={
+              <Box padding={1}>
+                <Text size={1}>{theme === 'primary' ? 'Primary button' : 'Secondary button'}</Text>
+              </Box>
+            }
+            placement="top"
+            portal
+          >
+            <span>{icon()}</span>
+          </Tooltip>
+        ),
+      }
     },
   },
-});
+})
