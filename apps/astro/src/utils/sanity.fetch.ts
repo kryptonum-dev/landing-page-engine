@@ -1,8 +1,8 @@
 import { createClient, type QueryParams } from '@sanity/client'
 import { isPreviewDeployment } from './is-preview-deployment'
 
-const SANITY_API_TOKEN = import.meta.env.SANITY_API_TOKEN
-const PROJECT_ID = import.meta.env.SANITY_PROJECT_ID
+const SANITY_API_TOKEN = process.env.SANITY_API_TOKEN || import.meta.env.SANITY_API_TOKEN
+const PROJECT_ID = process.env.SANITY_PROJECT_ID || import.meta.env.SANITY_PROJECT_ID
 
 if (!PROJECT_ID) {
   throw new Error('Missing SANITY_PROJECT_ID in environment variables')
