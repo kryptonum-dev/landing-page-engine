@@ -1,19 +1,35 @@
 import { defineField } from 'sanity'
-import { slugify } from './slugify'
 import { isUniqueSlug } from './is-unique-slug'
+import { slugify } from './slugify'
 
-export const defineSlugForDocument = ({ prefix = '', slug }: { prefix?: string; slug?: string }) => [
-  defineField({
-    name: 'title',
-    type: 'string',
-    title: 'Title',
-    description: 'The title of the document, used for display in the Breadcrumbs.',
-    validation: (Rule) => Rule.required(),
-  }),
+export const defineSlugForDocument = ({
+  source,
+  prefix = '',
+  additionalFields = {},
+  slug,
+}: {
+  source?: string
+  prefix?: string
+  additionalFields?: Record<string, any>
+  slug?: string
+}) => [
+  ...(source
+    ? []
+    : [
+        defineField({
+          name: 'name',
+          type: 'string',
+          title: 'Name',
+          description: 'The name of the document, used for display in the Breadcrumbs.',
+          validation: (Rule) => Rule.required(),
+          ...additionalFields,
+        }),
+      ]),
   defineField({
     name: 'slug',
     type: 'slug',
     title: `Slug`,
+    ...additionalFields,
     description: (
       <>
         Slug is a unique identifier for the document, used for SEO and links.
@@ -35,9 +51,13 @@ export const defineSlugForDocument = ({ prefix = '', slug }: { prefix?: string; 
     ),
     ...(!!slug && {
       initialValue: { current: slug },
-      // readOnly: true,
+      readOnly: true,
     }),
-    options: { source: 'title', slugify: (slug: string) => `${prefix || '/'}${slugify(slug)}`, isUnique: isUniqueSlug },
+    options: {
+      source: source || 'name',
+      slugify: (slug: string) => `${prefix || '/'}${slugify(slug)}`,
+      isUnique: isUniqueSlug,
+    },
     validation: (Rule) =>
       Rule.required().custom((value) => {
         if (prefix && value?.current && !value.current.startsWith(prefix)) {

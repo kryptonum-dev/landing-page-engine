@@ -1,225 +1,176 @@
 import { defineField, defineType } from 'sanity'
+import { defineSlugForDocument } from '../../utils/define-slug-for-document'
 
-const title = 'Landings'
 const icon = () => '📄'
 
 export default defineType({
   name: 'page',
-  title,
+  title: 'Landing',
   type: 'document',
   icon,
   groups: [
     {
-      name: 'local_settings',
+      name: 'localSettings',
       title: 'Local Settings',
+      default: true,
+      icon: () => '⚙️',
     },
     {
-      name: 'content',
-      title: 'Content',
+      name: 'contentPage',
+      title: 'Content Page',
+      icon: () => '📝',
     },
     {
-      name: 'not_found',
-      title: '404 Page',
-    },
-    {
-      name: 'faq',
-      title: 'FAQ',
+      name: 'notFoundPage',
+      title: 'Not Found Page (404)',
+      icon: () => '🔍',
     },
   ],
   fields: [
     defineField({
-      name: 'title',
-      title: 'Title',
-      type: 'string',
-      validation: (Rule) => Rule.required(),
-    }),
-    defineField({
-      name: 'slug',
-      type: 'slug',
-      title: 'Slug',
-      options: {
-        source: 'title',
-        maxLength: 96,
-      },
-      validation: (Rule) => Rule.required(),
-    }),
-    // Local Settings
-    defineField({
-      name: 'email',
-      type: 'string',
-      title: 'Local Email',
-      group: 'local_settings',
-      description: 'Local email address specific to this page (overrides global email if set)',
-      validation: (Rule) => Rule.email(),
-    }),
-    defineField({
-      name: 'tel',
-      type: 'string',
-      title: 'Local Phone number (optional)',
-      group: 'local_settings',
-      description: 'Local phone number specific to this page (overrides global phone if set)',
-    }),
-    defineField({
-      name: 'socials',
+      name: 'localSettings',
+      title: 'Local Settings',
+      description: 'Override global settings specifically for this page',
       type: 'object',
-      title: 'Local Social Media',
-      group: 'local_settings',
-      description: 'Social media links specific to this page (override global socials if set)',
-      options: { collapsible: true },
+      group: 'localSettings',
+      validation: (Rule) => Rule.required(),
       fields: [
         defineField({
-          name: 'instagram',
-          type: 'url',
-          title: 'Instagram',
-          validation: (Rule) => Rule.uri({ scheme: ['https'] }).error('Provide a valid URL (starting with https://)'),
+          name: 'email',
+          type: 'string',
+          title: 'Email',
+          validation: (Rule) =>
+            Rule.custom((value, context) => {
+              // Get the global settings document
+              const globalSettings = context
+                .getClient({ apiVersion: '2023-01-01' })
+                .fetch('*[_type == "global"][0].email')
+                .then((email) => {
+                  // If there's no global email and no local email, require the local email
+                  if (!email && !value) {
+                    return 'Email is required when no global email is set'
+                  }
+                  // If there is a value, validate it's a proper email
+                  if (value && !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value)) {
+                    return 'Please enter a valid email address'
+                  }
+                  return true
+                })
+              return globalSettings
+            }),
         }),
         defineField({
-          name: 'facebook',
-          type: 'url',
-          title: 'Facebook',
-          validation: (Rule) => Rule.uri({ scheme: ['https'] }).error('Provide a valid URL (starting with https://)'),
+          name: 'tel',
+          type: 'string',
+          title: 'Phone number (optional)',
         }),
         defineField({
-          name: 'tiktok',
-          type: 'url',
-          title: 'TikTok',
-          validation: (Rule) => Rule.uri({ scheme: ['https'] }).error('Provide a valid URL (starting with https://)'),
+          name: 'socials',
+          type: 'socials',
+          title: 'Social media',
         }),
         defineField({
-          name: 'linkedin',
-          type: 'url',
-          title: 'LinkedIn',
-          validation: (Rule) => Rule.uri({ scheme: ['https'] }).error('Provide a valid URL (starting with https://)'),
+          name: 'address',
+          type: 'address',
+          title: 'Address (optional)',
+        }),
+        defineField({
+          name: 'organization',
+          type: 'OrganizationSchema',
+          title: 'Organization',
+          validation: (Rule) =>
+            Rule.custom(
+              async (
+                value:
+                  | {
+                      name?: string
+                      description?: string
+                    }
+                  | undefined,
+                context
+              ) => {
+                const globalOrg = await context
+                  .getClient({ apiVersion: '2023-01-01' })
+                  .fetch('*[_type == "global"][0].organization')
+
+                if (!globalOrg?.name && !value?.name) {
+                  return 'Organization name is required when no global organization name is set'
+                }
+
+                if (!globalOrg?.description && !value?.description) {
+                  return 'Organization description is required when no global organization description is set'
+                }
+
+                return true
+              }
+            ),
         }),
       ],
     }),
     defineField({
-      name: 'localSeo',
+      name: 'contentPage',
+      title: 'Content Page',
+      description: 'Main content and settings for this landing page',
       type: 'object',
-      title: 'Local SEO',
-      group: 'local_settings',
-      description: 'SEO settings specific to this page (override global SEO if set)',
-      fields: [
-        defineField({
-          name: 'img',
-          type: 'image',
-          title: 'Social Share Image',
-          description:
-            'Local social share image (overrides global image if set). The dimensions of the image should be 1200x630px. For maximum compatibility, use JPG or PNG formats.',
-        }),
-      ],
-    }),
-    defineField({
-      name: 'localOrganization',
-      type: 'object',
-      title: 'Local Organization Data',
-      group: 'local_settings',
-      description: 'Local organization structured data (overrides global data if set)',
-      options: { collapsible: true },
+      group: 'contentPage',
+      validation: (Rule) => Rule.required(),
       fields: [
         defineField({
           name: 'name',
           type: 'string',
           title: 'Name',
-          description: 'Local organization name specific to this page.',
+          validation: (Rule) => Rule.required(),
+        }),
+        ...defineSlugForDocument({ source: 'contentPage.name' }),
+        defineField({
+          name: 'components',
+          type: 'components',
+          title: 'Page Components',
         }),
         defineField({
-          name: 'description',
-          type: 'text',
-          rows: 3,
-          title: 'Description',
-          description: 'Local organization description specific to this page.',
+          name: 'seo',
+          type: 'seo',
+          title: 'SEO',
+          validation: (Rule) =>
+            Rule.custom((value: { img?: { asset?: { _ref: string } } }) => {
+              if (!value?.img?.asset?._ref) {
+                return 'Social Share Image is required for Content Pages'
+              }
+              return true
+            }),
         }),
       ],
     }),
-    // Page Content
     defineField({
-      name: 'headline',
-      type: 'string',
-      title: 'Headline',
-      group: 'content',
+      name: 'notFoundPage',
+      title: 'Not Found Page (404)',
+      description: 'Content and settings specific to the 404 error page',
+      type: 'object',
+      group: 'notFoundPage',
       validation: (Rule) => Rule.required(),
-    }),
-    defineField({
-      name: 'description',
-      type: 'text',
-      title: 'Description',
-      group: 'content',
-      rows: 3,
-      validation: (Rule) => Rule.required(),
-    }),
-    defineField({
-      name: 'content',
-      type: 'array',
-      title: 'Content',
-      group: 'content',
-      description: 'Add, edit, and reorder content sections',
-      of: [{ type: 'PortableText' }],
-      validation: (Rule) => Rule.required(),
-    }),
-    // 404 Page
-    defineField({
-      name: 'notFoundHeadline',
-      type: 'string',
-      title: 'Headline',
-      group: 'not_found',
-      validation: (Rule) => Rule.required(),
-    }),
-    defineField({
-      name: 'notFoundDescription',
-      type: 'text',
-      title: 'Description',
-      group: 'not_found',
-      rows: 3,
-      validation: (Rule) => Rule.required(),
-    }),
-    defineField({
-      name: 'notFoundContent',
-      type: 'array',
-      title: 'Content',
-      group: 'not_found',
-      description: 'Additional content for the 404 page',
-      of: [{ type: 'PortableText' }],
-      validation: (Rule) => Rule.required(),
-    }),
-    // FAQ Collection
-    defineField({
-      name: 'faqItems',
-      title: 'FAQ Items',
-      type: 'array',
-      group: 'faq',
-      of: [
+      fields: [
         defineField({
-          name: 'faq',
-          type: 'object',
-          title: 'FAQ Item',
-          fields: [
-            defineField({
-              name: 'question',
-              type: 'Heading',
-              title: 'Question',
-              validation: (Rule) => Rule.required(),
-            }),
-            defineField({
-              name: 'answer',
-              type: 'PortableText',
-              title: 'Answer',
-              validation: (Rule) => Rule.required(),
-            }),
-          ],
+          name: 'components',
+          type: 'components',
+          title: 'Page Components',
+        }),
+        defineField({
+          name: 'seo',
+          type: 'seo',
+          title: 'SEO',
         }),
       ],
     }),
   ],
   preview: {
     select: {
-      title: 'title',
-      slug: 'slug',
+      title: 'contentPage.name',
     },
-    prepare: ({ title, slug }) => ({
-      title: title || 'Page',
-      subtitle: slug?.current,
-      icon,
-    }),
+    prepare({ title }) {
+      return {
+        title: title || 'Untitled',
+        icon,
+      }
+    },
   },
 })

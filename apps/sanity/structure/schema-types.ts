@@ -1,11 +1,8 @@
 // Single Types
 import global from '../schema/singleTypes/global'
 import redirects from '../schema/singleTypes/redirects'
-import NotFound_Page from '../schema/singleTypes/pages/404'
-import Page_Content from '../schema/singleTypes/pages/content'
-import Local_Settings from '../schema/singleTypes/pages/local'
 
-const singleTypes = [global, redirects, NotFound_Page, Page_Content, Local_Settings]
+const singleTypes = [global, redirects]
 
 // Collections Types
 import Faq_Collection from '../schema/collectionTypes/Faq_Collection'
@@ -19,13 +16,15 @@ import Components from '../schema/Components'
 const components = [Components]
 
 // UI Components
+import Address from '../schema/ui/address'
 import cta from '../schema/ui/cta'
+import OrganizationSchema from '../schema/ui/organizationSchema'
 import PortableText from '../schema/ui/PortableText'
 import Heading from '../schema/ui/PortableText/Heading'
 import seo from '../schema/ui/seo'
-import OrganizationSchema from '../schema/ui/organizationSchema'
+import Socials from '../schema/ui/socials'
 
-const ui = [cta, seo, PortableText, Heading, OrganizationSchema]
+const ui = [cta, seo, PortableText, Heading, OrganizationSchema, Address, Socials]
 
 export const schemaTypes = [...singleTypes, ...collectionTypes, ...components, ...ui]
 
