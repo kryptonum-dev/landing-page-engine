@@ -165,10 +165,12 @@ export default defineType({
   preview: {
     select: {
       title: 'contentPage.name',
+      description: 'contentPage.seo.description',
     },
-    prepare({ title }) {
+    prepare({ title, description }) {
       return {
-        title: title || 'Untitled',
+        title,
+        subtitle: description,
         icon,
       }
     },

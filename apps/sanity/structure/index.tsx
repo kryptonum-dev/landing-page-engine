@@ -6,4 +6,4 @@ export const structure: StructureResolver = (S) =>
   S.list()
     .id('root')
     .title('Content')
-    .items([createSingleton(S, 'global'), createSingleton(S, 'redirects'), createCollection(S, 'page')])
+    .items([createSingleton(S, 'global'), createSingleton(S, 'redirects'), S.divider(), createCollection(S, 'page')])

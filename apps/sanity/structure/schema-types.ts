@@ -5,10 +5,9 @@ import redirects from '../schema/singleTypes/redirects'
 const singleTypes = [global, redirects]
 
 // Collections Types
-import Faq_Collection from '../schema/collectionTypes/Faq_Collection'
 import Page_Collection from '../schema/collectionTypes/Page_Collection'
 
-const collectionTypes = [Faq_Collection, Page_Collection]
+const collectionTypes = [Page_Collection]
 
 // Components
 import Components from '../schema/Components'
