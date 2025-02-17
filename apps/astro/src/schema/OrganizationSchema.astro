@@ -37,6 +37,8 @@ const {
   `,
 })
 
+console.log(socials, organizationSchema, email, tel, address)
+
 const schema = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
@@ -46,7 +48,7 @@ const schema = {
   url: DOMAIN,
   ...(email && { email: email }),
   ...(tel && { telephone: tel }),
-  sameAs: [socials.facebook, socials.instagram, socials.linkedin, socials.tiktok].filter(Boolean),
+  ...(socials && { sameAs: [socials.facebook, socials.instagram, socials.linkedin, socials.tiktok].filter(Boolean) }),
   image: [
     {
       '@type': 'ImageObject',

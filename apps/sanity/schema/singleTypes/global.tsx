@@ -119,6 +119,7 @@ export default defineType({
       name: 'OrganizationSchema',
       type: 'object',
       title: 'Organization structured data',
+      validation: (Rule) => Rule.required(),
       description: (
         <>
           Learn more about{' '}
