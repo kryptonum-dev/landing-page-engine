@@ -8,6 +8,6 @@ export const Preview = ({ document }: { document: IframeProps['document'] }) => 
 
   const slug = (document.displayed.slug as { current?: string })?.current
   if (!slug) return getPreviewInfo('slug')
-  if (PREVIEW_DOMAIN) return getPreviewInfo('domain')
+  if (!PREVIEW_DOMAIN) return getPreviewInfo('domain')
   return <Iframe document={document} options={{ url: `${PREVIEW_DOMAIN}${slug}`, reload: { button: true } }} />
 }

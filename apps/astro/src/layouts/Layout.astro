@@ -1,17 +1,19 @@
 ---
 import '@/global/global.scss'
-import { LOCALE } from '../global/constants'
+import { LOCALE } from '@/global/constants'
 import Head, { type Props as HeadProps } from './Head.astro'
+import OrganizationSchema from '@/schema/OrganizationSchema.astro'
+import FaqPageSchema from '@/schema/FaqPageSchema.astro'
 
-type Props = HeadProps
-
-const { ...props } = Astro.props
+const { ...props } = Astro.props as HeadProps
 ---
 
 <!doctype html>
 <html lang={LOCALE}>
   <head>
     <Head {...props} />
+    <OrganizationSchema />
+    <FaqPageSchema />
   </head>
   <body>
     <main id="main">
