@@ -1,10 +1,10 @@
 ---
-import type { ComponentsProps } from "../components/Components.astro"
-import { Components_Query } from "../components/Components.astro"
-import sanityFetch from "../utils/sanity.fetch"
-import metadataFetch from "../utils/metadata.fetch"
-import Layout from "../layouts/Layout.astro"
-import Components from "../components/Components.astro"
+import type { ComponentsProps } from '../components/Components.astro'
+import { Components_Query } from '../components/Components.astro'
+import sanityFetch from '../utils/sanity.fetch'
+import metadataFetch from '../utils/metadata.fetch'
+import Layout from '../layouts/Layout.astro'
+import Components from '../components/Components.astro'
 
 const page = await sanityFetch<{
   name: string
@@ -19,13 +19,10 @@ const page = await sanityFetch<{
   `,
 })
 
-
 const metadata = await metadataFetch(page.slug)
-
-
 ---
 
 <Layout {...metadata}>
-    <h1>Not Found Page</h1>
+  <h1>Not Found Page</h1>
   <Components data={page.components} />
 </Layout>

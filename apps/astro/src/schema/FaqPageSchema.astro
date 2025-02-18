@@ -6,6 +6,8 @@ import { toHTML } from '@/utils/to-html'
 
 const { slug } = Astro.params
 
+if (!slug) return null
+
 const page = await sanityFetch<{
   components: {
     _type: string

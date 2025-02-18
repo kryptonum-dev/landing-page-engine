@@ -53,12 +53,12 @@ export default defineType({
   preview: {
     select: {
       title: 'seo.title',
-      description: 'seo.description',
+      slug: 'slug.current',
     },
-    prepare({ title, description }) {
+    prepare({ title, slug }) {
       return {
         title,
-        subtitle: description,
+        subtitle: slug,
         icon,
       }
     },

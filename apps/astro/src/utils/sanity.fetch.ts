@@ -1,8 +1,6 @@
+import { API_VERSION, DATASET, PROJECT_ID, SANITY_API_TOKEN } from '@/global/constants'
 import { createClient, type QueryParams } from '@sanity/client'
 import { isPreviewDeployment } from './is-preview-deployment'
-
-const SANITY_API_TOKEN = process.env.SANITY_API_TOKEN || import.meta.env.SANITY_API_TOKEN
-const PROJECT_ID = process.env.SANITY_PROJECT_ID || import.meta.env.SANITY_PROJECT_ID
 
 if (isPreviewDeployment && !SANITY_API_TOKEN) {
   console.warn('\x1b[33m%s\x1b[0m', 'The `SANITY_API_TOKEN` environment variable is required.')
@@ -10,8 +8,8 @@ if (isPreviewDeployment && !SANITY_API_TOKEN) {
 
 export const client = createClient({
   projectId: PROJECT_ID,
-  dataset: 'production',
-  apiVersion: '2024-10-15',
+  dataset: DATASET,
+  apiVersion: API_VERSION,
   useCdn: false,
   perspective: isPreviewDeployment ? 'drafts' : 'published',
   ...(isPreviewDeployment && { token: SANITY_API_TOKEN }),
