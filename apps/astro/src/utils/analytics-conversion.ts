@@ -16,8 +16,26 @@ type AnalyticsCredentials = {
   metaConversionToken: string | null
 }
 
-async function getCredentials(): Promise<AnalyticsCredentials> {
+async function getCredentials(slug?: string): Promise<AnalyticsCredentials> {
   try {
+    if (slug) {
+      // First try to get page-specific analytics
+      const analytics = await sanityFetch<AnalyticsCredentials>({
+        query: `
+          *[_type == "page" && slug.current == $slug][0].analytics {
+            metaPixelId,
+            metaConversionToken,
+          }
+        `,
+        params: { slug: slug },
+      })
+
+      if (analytics?.metaPixelId && analytics?.metaConversionToken) {
+        return analytics
+      }
+    }
+
+    // Fallback to global analytics if no page-specific analytics found
     const { analytics } = await sanityFetch<{ analytics: AnalyticsCredentials }>({
       query: `
         *[_type == "global"][0].analytics {
@@ -36,8 +54,8 @@ async function getCredentials(): Promise<AnalyticsCredentials> {
   }
 }
 
-async function sendToFacebook(userData: UserData) {
-  const { metaPixelId, metaConversionToken } = await getCredentials()
+async function sendToFacebook(userData: UserData, slug?: string) {
+  const { metaPixelId, metaConversionToken } = await getCredentials(slug)
   if (!metaPixelId || !metaConversionToken) return
 
   const current_timestamp = Math.floor(Date.now() / 1000)
@@ -63,32 +81,35 @@ async function sendToFacebook(userData: UserData) {
   const fbp = cookies._fbp
 
   try {
-    await fetch(`https://graph.facebook.com/v21.0/${metaPixelId}/events?access_token=${metaConversionToken}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        data: [
-          {
-            event_name: eventName,
-            event_time: current_timestamp,
-            action_source: eventSource,
-            event_source_url: referer,
-            user_data: {
-              client_ip_address,
-              client_user_agent,
-              em: await hash(email),
-              ...(fbc && { fbc }),
-              ...(fbp && { fbp }),
-              ...additionalUserData,
+    const res = await fetch(
+      `https://graph.facebook.com/v21.0/${metaPixelId}/events?access_token=${metaConversionToken}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          data: [
+            {
+              event_name: eventName,
+              event_time: current_timestamp,
+              action_source: eventSource,
+              event_source_url: referer,
+              user_data: {
+                client_ip_address,
+                client_user_agent,
+                em: await hash(email),
+                ...(fbc && { fbc }),
+                ...(fbp && { fbp }),
+                ...additionalUserData,
+              },
+              custom_data: {
+                content_name: contentName,
+                ...additionalCustomData,
+              },
             },
-            custom_data: {
-              content_name: contentName,
-              ...additionalCustomData,
-            },
-          },
-        ],
-      }),
-    })
+          ],
+        }),
+      }
+    )
   } catch (error) {
     console.error('Failed to send Facebook conversion event:', error)
   }
@@ -101,9 +122,9 @@ async function sendToFacebook(userData: UserData) {
 //   // TikTok Conversion API implementation
 // }
 
-export async function sendConversion(userData: UserData) {
+export async function sendConversion(userData: UserData, slug?: string) {
   await Promise.all([
-    sendToFacebook(userData),
+    sendToFacebook(userData, slug),
     // Add other platforms here in the future
     // sendToTikTok(userData),
   ])
