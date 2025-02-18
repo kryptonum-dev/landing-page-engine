@@ -3,6 +3,7 @@ import Layout from '@/src/layouts/Layout.astro'
 import Components, { type ComponentsProps, Components_Query } from '@/components/Components.astro'
 import metadataFetch from '@/utils/metadata.fetch'
 import sanityFetch from '@/utils/sanity.fetch'
+import GoogleTagManager from '../components/GoogleTagManager.astro'
 
 export async function getStaticPaths() {
   const pages = await sanityFetch<Array<{ slug: string }>>({
@@ -33,6 +34,7 @@ const metadata = await metadataFetch(_slug as string)
 ---
 
 <Layout {...metadata} slug={_slug}>
+  <GoogleTagManager slot="head" slug={_slug} />
   <Components data={page.components} />
   <h1>Hello World</h1>
 </Layout>

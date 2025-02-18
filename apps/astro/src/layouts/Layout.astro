@@ -4,13 +4,8 @@ import { LOCALE } from '@/global/constants'
 import Head, { type Props as HeadProps } from './Head.astro'
 import OrganizationSchema from '@/schema/OrganizationSchema.astro'
 import FaqPageSchema from '@/schema/FaqPageSchema.astro'
-import GoogleTagManager from '@/components/GoogleTagManager.astro'
 
-type LayoutProps = HeadProps & {
-  slug?: string
-}
-
-const { slug, ...props } = Astro.props as LayoutProps
+const { ...props } = Astro.props as HeadProps
 ---
 
 <!doctype html>
@@ -19,7 +14,6 @@ const { slug, ...props } = Astro.props as LayoutProps
     <Head {...props} />
     <OrganizationSchema />
     <FaqPageSchema />
-    <GoogleTagManager slug={slug} />
     <slot name="head" />
   </head>
   <body>
