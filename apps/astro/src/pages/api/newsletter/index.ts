@@ -1,6 +1,7 @@
 export const prerender = false
 
 import { MAILERLITE_API_KEY, REGEX } from '@/global/constants'
+import { sendConversion } from '@/utils/analytics-conversion'
 import type { APIRoute } from 'astro'
 import type { Props } from './subscribeToNewsletter'
 
@@ -36,6 +37,21 @@ export const POST: APIRoute = async ({ request }) => {
         { status: res.status }
       )
     }
+
+    await sendConversion({
+      email,
+      headers: request.headers,
+      eventName: 'Subscribe',
+      eventSource: 'website',
+      contentName: 'Newsletter Subscription',
+      additionalUserData: {
+        fn: name,
+      },
+      additionalCustomData: {
+        group_id: groupId,
+      },
+    })
+
     return new Response(
       JSON.stringify({
         message: 'Successfully subscribed to newsletter',

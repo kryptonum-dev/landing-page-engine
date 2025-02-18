@@ -13,10 +13,20 @@ const { gtmId, pageData } = await sanityFetch<{
   pageData: {
     name: string
     id: string
-    category: string
     description: string
     url: string
     title: string
+    type: string
+    createdAt: string
+    updatedAt: string
+    author: string
+    template: string
+    isPublished: boolean
+    tags: string[]
+    primaryCTA: string
+    locale: string
+    marketingCampaign?: string
+    seoScore?: number
   }
 }>({
   query: `*[_type == "page" && slug.current == $slug][0]{
@@ -26,22 +36,76 @@ const { gtmId, pageData } = await sanityFetch<{
       "id": _id,
       "description": seo.description,
       "url": slug.current,
-      "title": seo.title
+      "title": seo.title,
+      "type": _type,
+      "createdAt": _createdAt,
+      "updatedAt": _updatedAt,
+      "author": author.name,
+      "template": template,
+      "isPublished": isPublished,
+      "tags": tags,
+      "primaryCTA": primaryCTA,
+      "locale": locale,
+      "marketingCampaign": marketingCampaign,
+      "seoScore": seoScore
     }
   }`,
   params: { slug },
 })
 
 const fullUrl = `https://${DOMAIN}/${pageData?.url}`
+
+const now = new Date()
+const hours = now.getHours()
+const minutes = now.getMinutes()
+const eventHour = `${hours.toString().padStart(2, '0')}-${minutes.toString().padStart(2, '0')}`
+const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const months = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+]
+const eventDay = days[now.getDay()]
+const eventMonth = months[now.getMonth()]
+
+const commonData = {
+  user_role: 'guest',
+  traffic_source: 'direct',
+  event_hour: eventHour,
+  event_day: eventDay,
+  event_month: eventMonth,
+  page_url: fullUrl,
+  page_title: pageData.title,
+  page_type: 'landing_page',
+  time_on_site: 0,
+  scroll_depth: 0,
+}
+
+const viewContentData = {
+  ...commonData,
+  content_name: pageData.title,
+  content_category: 'Bez kategorii',
+  content_id: pageData.id,
+  content_type: pageData.type,
+  content_description: pageData.description,
+  content_language: 'pl',
+}
 ---
 
 {
   !!gtmId && (
-    <>
-      <script
-        slot="head"
-        is:inline
-        set:html={`
+    <script
+      is:inline
+      set:html={`
           window.dataLayer = window.dataLayer || [];
 
           (function(w,d,s,l,i){
@@ -60,24 +124,21 @@ const fullUrl = `https://${DOMAIN}/${pageData?.url}`
           })(window,document,'script','dataLayer','${gtmId}');
 
           window.dataLayer.push({
+            event: 'page_view',
+            ...${JSON.stringify(commonData)},
+            page_referrer: document.referrer,
+            language: navigator.language,
+            viewport_width: window.innerWidth,
+            viewport_height: window.innerHeight,
+            screen_resolution: window.screen.width + 'x' + window.screen.height,
+            user_agent: navigator.userAgent
+          });
+
+          window.dataLayer.push({
             event: 'view_content',
-            pageType: 'landing_page',
-            pageName: '${pageData.name}',
-            pageId: '${pageData.id}',
-            pageTitle: '${pageData.title}',
-            pageDescription: '${pageData.description}',
-            pageUrl: '${fullUrl}'
+            ...${JSON.stringify(viewContentData)}
           });
         `}
-      />
-      <noscript>
-        <iframe
-          src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
-          height="0"
-          width="0"
-          style="display:none;visibility:hidden"
-        />
-      </noscript>
-    </>
+    />
   )
 }

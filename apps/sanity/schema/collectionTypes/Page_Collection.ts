@@ -75,6 +75,26 @@ export default defineType({
               return true
             }),
         }),
+        defineField({
+          name: 'metaPixelId',
+          type: 'string',
+          title: 'Meta (Facebook) Pixel ID',
+          description: 'Format: XXXXXXXXXX. Used for Meta Pixel and Conversion API tracking.',
+          validation: (Rule) =>
+            Rule.custom((value) => {
+              if (!value) return true
+              if (!/^\d{15,16}$/.test(value)) {
+                return 'Meta Pixel ID must be a 15-16 digit number'
+              }
+              return true
+            }),
+        }),
+        defineField({
+          name: 'metaConversionToken',
+          type: 'string',
+          title: 'Meta Conversion API Token',
+          description: 'Secret token for server-side Meta Conversion API tracking.',
+        }),
       ],
     }),
   ],

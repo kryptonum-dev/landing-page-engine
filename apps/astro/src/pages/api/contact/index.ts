@@ -1,6 +1,7 @@
 export const prerender = false
 
 import { REGEX, RESEND_API_KEY } from '@/global/constants'
+import { sendConversion } from '@/utils/analytics-conversion'
 import { htmlToString } from '@/utils/html-to-string'
 import type { APIRoute } from 'astro'
 import type { Props } from './sendContactEmail'
@@ -85,6 +86,15 @@ export const POST: APIRoute = async ({ request }) => {
         { status: 400 }
       )
     }
+
+    // Send conversion event
+    await sendConversion({
+      email,
+      headers: request.headers,
+      eventName: 'Lead',
+      eventSource: 'website',
+      contentName: 'Contact Form Submission',
+    })
 
     return new Response(
       JSON.stringify({

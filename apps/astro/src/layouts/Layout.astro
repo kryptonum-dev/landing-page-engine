@@ -19,10 +19,10 @@ const { slug, ...props } = Astro.props as LayoutProps
     <Head {...props} />
     <OrganizationSchema />
     <FaqPageSchema />
+    <GoogleTagManager slug={slug} />
     <slot name="head" />
   </head>
   <body>
-    <GoogleTagManager slug={slug} />
     <main id="main">
       <slot />
     </main>
