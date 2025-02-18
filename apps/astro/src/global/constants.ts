@@ -28,7 +28,7 @@ export const LOCALE: string = 'pl'
  * @constant
  * @type {string}
  */
-export const DOMAIN: string = 'https://localhost:4321'
+export const DOMAIN: string = 'https://landing-page-engine-astro-git-dev-kryptonum.vercel.app'
 
 /**
  * Global declaration of the default title for the application.
