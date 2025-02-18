@@ -1,12 +1,12 @@
-import { defineType } from "sanity";
+import { defineType } from 'sanity'
 
 export default defineType({
   name: 'components',
   type: 'array',
   title: 'Components',
-  of: [
-
-  ],
+  description:
+    'Build your page by adding customizable components. Drag and drop to reorder, each component renders sequentially to create your landing page layout.',
+  of: [],
   options: {
     insertMenu: {
       filter: true,
@@ -14,7 +14,7 @@ export default defineType({
       views: [
         { name: 'grid', previewImageUrl: (schemaTypeName) => `/static/${schemaTypeName}.webp` },
         { name: 'list' },
-      ]
-    }
-  }
-});
+      ],
+    },
+  },
+})

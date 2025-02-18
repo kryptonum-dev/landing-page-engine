@@ -1,4 +1,4 @@
-import { API_VERSION, DATASET, PROJECT_ID, SANITY_API_TOKEN } from '@/global/constants'
+import { API_VERSION, DATASET, PROJECT_ID, SANITY_API_TOKEN } from '../global/constants'
 import { createClient, type QueryParams } from '@sanity/client'
 import { isPreviewDeployment } from './is-preview-deployment'
 

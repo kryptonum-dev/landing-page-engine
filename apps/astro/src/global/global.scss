@@ -19,11 +19,11 @@
 }
 
 :root {
-  --gap: clamp(96px, calc(132vw / 7.68), 152px);
+  --gap: clamp(6rem, calc(8.25vw / 0.48), 9.5rem);
 
-  --pageMargin: clamp(16px, calc(40vw / 7.68), 40px);
-  @media (max-width: 899px) and (min-width: 600px) {
-    --pageMargin: clamp(40px, calc(80vw / 7.68), 80px);
+  --pageMargin: clamp(1rem, calc(2.5vw / 0.48), 2.5rem);
+  @media (max-width: 56.1875rem) and (min-width: 37.5rem) {
+    --pageMargin: clamp(2.5rem, calc(5vw / 0.48), 5rem);
   }
 }
 
@@ -128,7 +128,7 @@ body {
 
 main,
 .max-width {
-  max-width: 1200px;
+  max-width: 75rem;
   width: calc(100% - var(--pageMargin) * 2);
   margin: 0 auto;
   height: 100%;
@@ -193,13 +193,6 @@ h3,
   }
 }
 
-.sec-wo-margin {
-  margin: 0 calc(var(--pageMargin) * -1);
-  @media (min-width: 1280px) {
-    margin: 0 calc((100vw - 1200px) / -2);
-  }
-}
-
 .ordered-list,
 .unordered-list {
   display: grid;
@@ -221,13 +214,6 @@ h3,
 .ordered-list {
   list-style-type: decimal;
   padding-left: 1.5rem;
-}
-
-.cta-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: clamp(12px, calc(16vw / 7.68), 16px);
 }
 
 div.paragraph {
