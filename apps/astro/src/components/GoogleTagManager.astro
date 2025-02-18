@@ -34,20 +34,9 @@ const { gtmId, pageData } = await sanityFetch<{
     "pageData": {
       "name": name,
       "id": _id,
+      "title": seo.title,
       "description": seo.description,
       "url": slug.current,
-      "title": seo.title,
-      "type": _type,
-      "createdAt": _createdAt,
-      "updatedAt": _updatedAt,
-      "author": author.name,
-      "template": template,
-      "isPublished": isPublished,
-      "tags": tags,
-      "primaryCTA": primaryCTA,
-      "locale": locale,
-      "marketingCampaign": marketingCampaign,
-      "seoScore": seoScore
     }
   }`,
   params: { slug },
@@ -77,7 +66,7 @@ const months = [
 const eventDay = days[now.getDay()]
 const eventMonth = months[now.getMonth()]
 
-const commonData = {
+const additionalData = {
   user_role: 'guest',
   traffic_source: 'direct',
   event_hour: eventHour,
@@ -86,13 +75,7 @@ const commonData = {
   page_url: fullUrl,
   page_title: pageData.title,
   page_type: 'landing_page',
-  time_on_site: 0,
-  scroll_depth: 0,
-}
-
-const viewContentData = {
-  ...commonData,
-  content_name: pageData.title,
+  content_name: pageData.name,
   content_category: 'Bez kategorii',
   content_id: pageData.id,
   content_type: pageData.type,
@@ -108,6 +91,16 @@ const viewContentData = {
       set:html={`
           window.dataLayer = window.dataLayer || [];
 
+          window.dataLayer.push({
+            ...${JSON.stringify(additionalData)},
+            page_referrer: document.referrer,
+            language: navigator.language,
+            viewport_width: window.innerWidth,
+            viewport_height: window.innerHeight,
+            screen_resolution: window.screen.width + 'x' + window.screen.height,
+            user_agent: navigator.userAgent
+          });
+
           (function(w,d,s,l,i){
             w[l]=w[l]||[];
             w[l].push({
@@ -122,22 +115,6 @@ const viewContentData = {
               f.parentNode.insertBefore(j,f);
             }
           })(window,document,'script','dataLayer','${gtmId}');
-
-          window.dataLayer.push({
-            event: 'page_view',
-            ...${JSON.stringify(commonData)},
-            page_referrer: document.referrer,
-            language: navigator.language,
-            viewport_width: window.innerWidth,
-            viewport_height: window.innerHeight,
-            screen_resolution: window.screen.width + 'x' + window.screen.height,
-            user_agent: navigator.userAgent
-          });
-
-          window.dataLayer.push({
-            event: 'view_content',
-            ...${JSON.stringify(viewContentData)}
-          });
         `}
     />
   )
