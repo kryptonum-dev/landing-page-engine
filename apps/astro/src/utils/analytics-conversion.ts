@@ -86,12 +86,16 @@ async function sendToFacebook(userData: UserData, slug?: string) {
     const fbp = cookies._fbp
 
     try {
+      // Generate a unique event ID using timestamp and a random string
+      const event_id = `${current_timestamp}_${Math.random().toString(36).substring(2, 15)}`
+
       await fetch(`https://graph.facebook.com/v21.0/${metaPixelId}/events?access_token=${metaConversionToken}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           data: [
             {
+              event_id,
               event_name: eventName,
               event_time: current_timestamp,
               action_source: eventSource,
