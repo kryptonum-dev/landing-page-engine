@@ -1,10 +1,11 @@
 ---
+export const prerender = true
+
 import Layout from '@/src/layouts/Layout.astro'
 import Components, { type ComponentsProps, Components_Query } from '@/components/Components.astro'
 import metadataFetch from '@/utils/metadata.fetch'
 import sanityFetch from '@/utils/sanity.fetch'
 import GoogleTagManager from '../components/GoogleTagManager.astro'
-import { DOMAIN } from '@/global/constants'
 
 export async function getStaticPaths() {
   const pages = await sanityFetch<Array<{ slug: string }>>({
@@ -32,12 +33,6 @@ const page = await sanityFetch<{ components: ComponentsProps }>({
 if (!page) return Astro.rewrite('/404')
 
 const metadata = await metadataFetch(_slug as string)
-
-await fetch(`${DOMAIN}/api/contact`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email: 'hej@gmail.com', message: 'hej', legal: true, slug: _slug }),
-})
 ---
 
 <Layout {...metadata} slug={_slug}>

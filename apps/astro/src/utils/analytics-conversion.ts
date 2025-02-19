@@ -16,7 +16,7 @@ type AnalyticsCredentials = {
   metaConversionToken: string | null
 }
 
-async function getCredentials(slug?: string): Promise<AnalyticsCredentials> {
+async function getCredentials(slug?: string): Promise<AnalyticsCredentials | undefined> {
   try {
     if (slug) {
       // First try to get page-specific analytics
@@ -30,21 +30,8 @@ async function getCredentials(slug?: string): Promise<AnalyticsCredentials> {
         params: { slug: slug },
       })
 
-      if (analytics?.metaPixelId && analytics?.metaConversionToken) {
-        return analytics
-      }
+      if (!analytics) return undefined
     }
-
-    // Fallback to global analytics if no page-specific analytics found
-    const { analytics } = await sanityFetch<{ analytics: AnalyticsCredentials }>({
-      query: `
-        *[_type == "global"][0].analytics {
-          metaPixelId,
-          metaConversionToken,
-        }
-      `,
-    })
-    return analytics
   } catch (error) {
     console.error('Failed to fetch analytics credentials from Sanity:', error)
     return {
@@ -55,15 +42,12 @@ async function getCredentials(slug?: string): Promise<AnalyticsCredentials> {
 }
 
 async function sendToFacebook(userData: UserData, slug?: string) {
-  const { metaPixelId, metaConversionToken } = await getCredentials(slug)
-  if (!metaPixelId || !metaConversionToken) return
+  const credentials = await getCredentials(slug)
+  if (!credentials) return
 
-  const current_timestamp = Math.floor(Date.now() / 1000)
   const { email, headers, eventName, eventSource, contentName, additionalUserData, additionalCustomData } = userData
-  const client_ip_address = headers.get('x-forwarded-for') || headers.get('x-real-ip')
-  const client_user_agent = headers.get('user-agent')
-  const referer = headers.get('referer')
 
+  // Check for marketing consent from cookies header
   const cookies =
     headers
       .get('cookie')
@@ -77,13 +61,32 @@ async function sendToFacebook(userData: UserData, slug?: string) {
         {} as Record<string, string>
       ) || {}
 
-  const fbc = cookies._fbc
-  const fbp = cookies._fbp
+  const cookieConsent = cookies['cookie-consent']
+  if (!cookieConsent) return // No consent given yet
 
   try {
-    const res = await fetch(
-      `https://graph.facebook.com/v21.0/${metaPixelId}/events?access_token=${metaConversionToken}`,
-      {
+    const consentSettings = JSON.parse(decodeURIComponent(cookieConsent))
+    // Check for specific marketing consent flags
+    if (consentSettings.conversion_api !== 'granted') {
+      console.info('Conversion API consent not granted, skipping Facebook Conversion API')
+      return
+    }
+
+    // Check if we can use advanced matching
+    const canUseAdvancedMatching = consentSettings.advanced_matching === 'granted'
+
+    const { metaPixelId, metaConversionToken } = credentials
+
+    const current_timestamp = Math.floor(Date.now() / 1000)
+    const client_ip_address = headers.get('x-forwarded-for') || headers.get('x-real-ip')
+    const client_user_agent = headers.get('user-agent')
+    const referer = headers.get('referer')
+
+    const fbc = cookies._fbc
+    const fbp = cookies._fbp
+
+    try {
+      await fetch(`https://graph.facebook.com/v21.0/${metaPixelId}/events?access_token=${metaConversionToken}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -94,11 +97,15 @@ async function sendToFacebook(userData: UserData, slug?: string) {
               action_source: eventSource,
               event_source_url: referer,
               user_data: {
-                client_ip_address,
-                client_user_agent,
-                em: await hash(email),
-                ...(fbc && { fbc }),
-                ...(fbp && { fbp }),
+                ...(canUseAdvancedMatching
+                  ? {
+                      client_ip_address,
+                      client_user_agent,
+                      em: await hash(email),
+                      ...(fbc && { fbc }),
+                      ...(fbp && { fbp }),
+                    }
+                  : {}),
                 ...additionalUserData,
               },
               custom_data: {
@@ -108,10 +115,13 @@ async function sendToFacebook(userData: UserData, slug?: string) {
             },
           ],
         }),
-      }
-    )
+      })
+    } catch (error) {
+      console.error('Failed to send Facebook conversion event:', error)
+    }
   } catch (error) {
-    console.error('Failed to send Facebook conversion event:', error)
+    console.error('Failed to parse consent settings:', error)
+    return
   }
 }
 

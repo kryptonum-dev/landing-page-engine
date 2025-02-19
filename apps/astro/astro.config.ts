@@ -1,3 +1,4 @@
+import preact from '@astrojs/preact'
 import vercel from '@astrojs/vercel'
 import { defineConfig } from 'astro/config'
 import redirects from './redirects'
@@ -6,7 +7,7 @@ import { isPreviewDeployment } from './src/utils/is-preview-deployment'
 
 export default defineConfig({
   site: DOMAIN,
-  integrations: [],
+  integrations: [preact({ compat: true })],
   image: {
     remotePatterns: [
       {
