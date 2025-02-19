@@ -1,30 +1,6 @@
 import type { PortableTextValue } from '@/components/ui/portable-text'
 import sanityFetch from './sanity.fetch'
 
-type Block = {
-  _type: string
-  style?: string
-  listItem?: 'bullet' | 'number'
-  children?: Array<{
-    text: string
-    marks?: string[]
-  }>
-  markDefs?: Array<{
-    _key: string
-    _type: string
-    href?: string
-    linkType?: string
-    internal?: {
-      _ref: string
-    }
-    external?: string
-  }>
-  asset?: {
-    url: string
-  }
-  alt?: string
-}
-
 const getInternalSlug = async (ref: string) => {
   const data = await sanityFetch<string>({
     query: `*[_type == $type][0].slug.current`,
