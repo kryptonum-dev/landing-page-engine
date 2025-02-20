@@ -1,5 +1,5 @@
 import { hash } from '@/utils/hash'
-import sanityFetch from '@/utils/sanity.fetch'
+import { getPageAnalyticsData } from '@/utils/page-data'
 import type { APIRoute } from 'astro'
 
 type UserData = {
@@ -12,36 +12,6 @@ type UserData = {
   slug?: string
   event_id: string
   event_time: number
-}
-
-type AnalyticsCredentials = {
-  metaPixelId: string | null
-  metaConversionToken: string | null
-}
-
-async function getCredentials(slug?: string): Promise<AnalyticsCredentials | undefined> {
-  try {
-    if (slug) {
-      const analytics = await sanityFetch<AnalyticsCredentials>({
-        query: `
-          *[_type == "page" && slug.current == $slug][0].analytics {
-            metaPixelId,
-            metaConversionToken,
-          }
-        `,
-        params: { slug: slug },
-      })
-
-      if (!analytics) return undefined
-      return analytics
-    }
-  } catch (error) {
-    console.error('Failed to fetch analytics credentials from Sanity:', error)
-    return {
-      metaPixelId: null,
-      metaConversionToken: null,
-    }
-  }
 }
 
 export const POST: APIRoute = async ({ request }) => {
@@ -59,8 +29,19 @@ export const POST: APIRoute = async ({ request }) => {
       event_time,
     } = userData
 
-    const credentials = await getCredentials(slug)
-    if (!credentials || !credentials.metaPixelId || !credentials.metaConversionToken) {
+    if (!slug) {
+      return new Response(
+        JSON.stringify({
+          message: 'Slug is required',
+          success: false,
+        }),
+        { status: 400 }
+      )
+    }
+
+    const { analytics, additionalData } = await getPageAnalyticsData(slug)
+
+    if (!analytics.metaPixelId || !analytics.metaConversionToken) {
       return new Response(
         JSON.stringify({
           message: 'Analytics credentials not found',
@@ -107,8 +88,6 @@ export const POST: APIRoute = async ({ request }) => {
 
     const canUseAdvancedMatching = consentSettings.advanced_matching === 'granted'
 
-    const { metaPixelId, metaConversionToken } = credentials
-
     const client_ip_address = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip')
     const client_user_agent = request.headers.get('user-agent')
     const referer = request.headers.get('referer')
@@ -117,7 +96,7 @@ export const POST: APIRoute = async ({ request }) => {
     const fbp = cookies._fbp
 
     const response = await fetch(
-      `https://graph.facebook.com/v21.0/${metaPixelId}/events?access_token=${metaConversionToken}`,
+      `https://graph.facebook.com/v21.0/${analytics.metaPixelId}/events?access_token=${analytics.metaConversionToken}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -143,6 +122,7 @@ export const POST: APIRoute = async ({ request }) => {
               },
               custom_data: {
                 content_name: contentName,
+                ...additionalData,
                 ...additionalCustomData,
               },
             },
