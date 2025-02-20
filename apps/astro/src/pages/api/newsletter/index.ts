@@ -1,7 +1,7 @@
 export const prerender = false
 
 import { MAILERLITE_API_KEY, REGEX } from '@/global/constants'
-import { sendConversion } from '@/utils/analytics-conversion'
+import { generateEventIdentifiers } from '@/utils/event-identifiers'
 import type { APIRoute } from 'astro'
 import type { Props } from './subscribeToNewsletter'
 
@@ -38,9 +38,9 @@ export const POST: APIRoute = async ({ request }) => {
       )
     }
 
-    await sendConversion({
+    const { event_id, event_time } = generateEventIdentifiers()
+    const conversionData = {
       email,
-      headers: request.headers,
       eventName: 'Subscribe',
       eventSource: 'website',
       contentName: 'Newsletter Subscription',
@@ -50,7 +50,24 @@ export const POST: APIRoute = async ({ request }) => {
       additionalCustomData: {
         group_id: groupId,
       },
-    })
+      event_id,
+      event_time,
+    }
+
+    try {
+      const response = await fetch('/api/meta-conversions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(conversionData),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        console.warn('Meta conversion event failed:', data.message)
+      }
+    } catch (error) {
+      console.warn('Failed to send Meta conversion event:', error)
+    }
 
     return new Response(
       JSON.stringify({

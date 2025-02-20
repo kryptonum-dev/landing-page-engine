@@ -95,13 +95,13 @@ const groups = [
     subGroups: [
       {
         id: 'conversion_api',
-        name: 'API Konwersji',
+        name: 'API Konwersji (Facebook)',
         description:
           'Pozwala na przesyłanie danych o konwersjach bezpośrednio do platform reklamowych w celu poprawy skuteczności reklam i lepszego mierzenia ich efektywności.',
       },
       {
         id: 'advanced_matching',
-        name: 'Zaawansowane Dopasowanie',
+        name: 'Zaawansowane Dopasowanie (Facebook)',
         description:
           'Umożliwia lepsze dopasowanie użytkowników do ich działań na stronie, co pomaga w dokładniejszym targetowaniu reklam i analizie ich skuteczności.',
       },
@@ -374,11 +374,14 @@ const groups = [
   }
 </style>
 
-<script is:inline define:vars={{ gtmId, additionalData }}>
+<script is:inline define:vars={{ gtmId, additionalData, pageData }}>
   window.dataLayer = window.dataLayer || []
   function gtag() {
     window.dataLayer.push(arguments)
   }
+
+  // Store initial page load time for accurate event timing
+  const initialPageLoadTime = Math.floor(Date.now() / 1000)
 
   gtag('set', additionalData)
 
@@ -391,6 +394,71 @@ const groups = [
     const date = new Date(Date.now() + 86400000 * days)
     const expires = days ? `; expires=${date.toUTCString()}` : ''
     document.cookie = `${name}=${encodeURIComponent(value)}${expires}; SameSite=Strict`
+  }
+
+  // Helper function to send server-side conversion events
+  async function sendConversion(eventData) {
+    const cookieConsent = getCookie('cookie-consent')
+    if (!cookieConsent) return
+
+    const consentSettings = JSON.parse(decodeURIComponent(cookieConsent))
+    if (consentSettings.conversion_api !== 'granted') return
+
+    try {
+      const response = await fetch('/api/meta-conversions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(eventData),
+      })
+      if (!response.ok) {
+        const data = await response.json()
+        console.warn('Meta conversion event failed:', data.message)
+      }
+    } catch (error) {
+      console.warn('Failed to send Meta conversion event:', error)
+    }
+  }
+
+  // Function to handle both GTM and Conversion API events
+  function trackEvent(eventName, customData = {}, timestamp = Math.floor(Date.now() / 1000)) {
+    // Generate event identifiers
+    const event_id = crypto.randomUUID()
+    const event_time = timestamp
+
+    // Common data for both GTM and Conversion API
+    const commonData = {
+      ...customData,
+      event_id,
+      event_time,
+    }
+
+    // Send GTM event
+    gtag('event', eventName, commonData)
+
+    // Prepare Conversion API event data
+    const conversionData = {
+      eventName,
+      eventSource: 'website',
+      event_id,
+      event_time,
+      additionalCustomData: { customData, ...additionalData },
+      slug: pageData.url,
+    }
+
+    // Send Conversion API event
+    sendConversion(conversionData)
+  }
+
+  function fireInitialEvents() {
+    trackEvent(
+      'page_view',
+      {
+        page_location: window.location.href,
+        page_path: window.location.pathname,
+      },
+      initialPageLoadTime
+    )
+    trackEvent('view_content', {}, initialPageLoadTime)
   }
 
   const cookieConsentElement = document.querySelector('.cookie-consent')
@@ -414,7 +482,21 @@ const groups = [
     gtag('consent', 'update', consentMode)
     setCookie('cookie-consent', JSON.stringify(consentMode), 90)
     cookieConsentElement.setAttribute('aria-hidden', 'false')
+    fireInitialEvents()
   }
+
+  // Initialize GTM
+  ;(function (w, d, s, l, i) {
+    w[l] = w[l] || []
+    w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' })
+    var f = d.getElementsByTagName(s)[0],
+      j = d.createElement(s),
+      dl = l != 'dataLayer' ? '&l=' + l : ''
+    j.async = true
+    j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl
+    f.parentNode.insertBefore(j, f)
+  })(window, document, 'script', 'dataLayer', gtmId)
+
   if (getCookie('cookie-consent') === null) {
     gtag('consent', 'default', {
       functionality_storage: 'denied',
@@ -428,14 +510,8 @@ const groups = [
     cookieConsentElement.setAttribute('aria-hidden', 'false')
   } else {
     gtag('consent', 'default', JSON.parse(getCookie('cookie-consent')))
+    fireInitialEvents()
   }
-
-  // prettier-ignore
-  ;(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer', gtmId);
 
   acceptAllButton.addEventListener('click', () => {
     setConsent({
