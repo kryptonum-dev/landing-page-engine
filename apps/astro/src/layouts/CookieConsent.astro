@@ -380,7 +380,6 @@ const groups = [
     window.dataLayer.push(arguments)
   }
 
-  // Store initial page load time for accurate event timing
   const initialPageLoadTime = Math.floor(Date.now() / 1000)
 
   gtag('set', additionalData)
@@ -396,7 +395,6 @@ const groups = [
     document.cookie = `${name}=${encodeURIComponent(value)}${expires}; SameSite=Strict`
   }
 
-  // Helper function to send server-side conversion events
   async function sendConversion(eventData) {
     const cookieConsent = getCookie('cookie-consent')
     if (!cookieConsent) return
@@ -419,23 +417,18 @@ const groups = [
     }
   }
 
-  // Function to handle both GTM and Conversion API events
   function trackEvent(eventName, customData = {}, timestamp = Math.floor(Date.now() / 1000)) {
-    // Generate event identifiers
     const event_id = crypto.randomUUID()
     const event_time = timestamp
 
-    // Common data for both GTM and Conversion API
     const commonData = {
       ...customData,
       event_id,
       event_time,
     }
 
-    // Send GTM event
     gtag('event', eventName, commonData)
 
-    // Prepare Conversion API event data
     const conversionData = {
       eventName,
       eventSource: 'website',
@@ -445,11 +438,7 @@ const groups = [
       slug: pageData.url,
     }
 
-    // Send Conversion API event
     sendConversion(conversionData)
-
-    console.log(event_id)
-    console.log(event_time)
   }
 
   function fireInitialEvents() {
@@ -463,12 +452,6 @@ const groups = [
     )
     trackEvent('view_content', {}, initialPageLoadTime)
   }
-
-  const cookieConsentElement = document.querySelector('.cookie-consent')
-  const acceptAllButton = cookieConsentElement.querySelector('.agree')
-  const preferencesButton = cookieConsentElement.querySelector('.setPreferences')
-  const denyButton = cookieConsentElement.querySelector('.deny')
-  let isPreferencesOpen = false
 
   function setConsent(consent) {
     const consentMode = {
@@ -484,9 +467,23 @@ const groups = [
     }
     gtag('consent', 'update', consentMode)
     setCookie('cookie-consent', JSON.stringify(consentMode), 90)
-    cookieConsentElement.setAttribute('aria-hidden', 'false')
+
+    const focusedElement = document.activeElement
+    if (focusedElement && cookieConsentElement.contains(focusedElement)) {
+      focusedElement.blur()
+    }
+
+    cookieConsentElement.style.display = 'none'
+    cookieConsentElement.setAttribute('aria-hidden', 'true')
+
     fireInitialEvents()
   }
+
+  const cookieConsentElement = document.querySelector('.cookie-consent')
+  const acceptAllButton = cookieConsentElement.querySelector('.agree')
+  const preferencesButton = cookieConsentElement.querySelector('.setPreferences')
+  const denyButton = cookieConsentElement.querySelector('.deny')
+  let isPreferencesOpen = false
 
   // Initialize GTM
   ;(function (w, d, s, l, i) {
