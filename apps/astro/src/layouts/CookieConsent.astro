@@ -341,6 +341,13 @@ const groups = [
     document.cookie = `${name}=${encodeURIComponent(value)}${expires}; SameSite=Strict`
   }
 
+  function formatMetaEventName(eventName) {
+    return eventName
+      .split('_')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join('')
+  }
+
   async function sendConversion(eventData) {
     const cookieConsent = getCookie('cookie-consent')
     if (!cookieConsent) return
@@ -352,7 +359,10 @@ const groups = [
       const response = await fetch('/api/meta-conversions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(eventData),
+        body: JSON.stringify({
+          ...eventData,
+          eventName: formatMetaEventName(eventData.eventName),
+        }),
       })
       if (!response.ok) {
         const data = await response.json()
