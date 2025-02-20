@@ -65,12 +65,7 @@ const groups = [
     </noscript>
   )
 }
-<aside
-  class="cookie-consent"
-  aria-hidden="true"
-  data-gtm-id={gtmId}
-  data-additional-data={JSON.stringify(additionalData)}
->
+<aside class="cookie-consent" aria-hidden="true">
   <section class="content">
     <header class="header">
       <div data-header-initial>
@@ -325,46 +320,35 @@ const groups = [
   }
 </style>
 
-<script>
-  const cookieConsentElement = document.querySelector('.cookie-consent')! as HTMLElement
-  const gtmId = cookieConsentElement.dataset.gtmId
-  const additionalData = JSON.parse(cookieConsentElement.dataset.additionalData || '{}')
-
-  if (!gtmId) return
-
-  interface Window {
-    dataLayer: any[]
-  }
-  declare const window: Window
-
+<script is:inline define:vars={{ gtmId, additionalData }}>
   window.dataLayer = window.dataLayer || []
-  function gtag(...args: any[]) {
-    window.dataLayer.push(args)
+  function gtag() {
+    window.dataLayer.push(arguments)
   }
 
   const initialPageLoadTime = Math.floor(Date.now() / 1000)
 
   gtag('set', additionalData)
 
-  function getCookie(name: string) {
+  function getCookie(name) {
     const cookies = document.cookie.split(';').map((cookie) => cookie.trim())
     const cookie = cookies.find((cookie) => cookie.startsWith(`${name}=`))
     return cookie ? decodeURIComponent(cookie.substring(name.length + 1)) : null
   }
-  function setCookie(name: string, value: string, days = 1) {
+  function setCookie(name, value, days = 1) {
     const date = new Date(Date.now() + 86400000 * days)
     const expires = days ? `; expires=${date.toUTCString()}` : ''
     document.cookie = `${name}=${encodeURIComponent(value)}${expires}; SameSite=Strict`
   }
 
-  function formatMetaEventName(eventName: string) {
+  function formatMetaEventName(eventName) {
     return eventName
       .split('_')
-      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join('')
   }
 
-  async function sendConversion(eventData: any) {
+  async function sendConversion(eventData) {
     const cookieConsent = getCookie('cookie-consent')
     if (!cookieConsent) return
 
@@ -389,7 +373,7 @@ const groups = [
     }
   }
 
-  function trackEvent(eventName: string, customData = {}, timestamp = Math.floor(Date.now() / 1000)) {
+  function trackEvent(eventName, customData = {}, timestamp = Math.floor(Date.now() / 1000)) {
     const event_id = crypto.randomUUID()
     const event_time = timestamp
 
@@ -407,7 +391,7 @@ const groups = [
       event_id,
       event_time,
       additionalCustomData: { customData, ...additionalData },
-      slug: (window as any).location.pathname,
+      slug: window.location.pathname,
     }
 
     sendConversion(conversionData)
@@ -417,15 +401,15 @@ const groups = [
     trackEvent(
       'page_view',
       {
-        page_location: (window as any).location.href,
-        page_path: (window as any).location.pathname,
+        page_location: window.location.href,
+        page_path: window.location.pathname,
       },
       initialPageLoadTime
     )
     trackEvent('view_content', {}, initialPageLoadTime)
   }
 
-  function setConsent(consent: any) {
+  function setConsent(consent) {
     const consentMode = {
       functionality_storage: consent.necessary ? 'granted' : 'denied',
       security_storage: consent.necessary ? 'granted' : 'denied',
@@ -440,7 +424,7 @@ const groups = [
     gtag('consent', 'update', consentMode)
     setCookie('cookie-consent', JSON.stringify(consentMode), 90)
 
-    const focusedElement = document.activeElement as HTMLElement
+    const focusedElement = document.activeElement
     if (focusedElement && cookieConsentElement.contains(focusedElement)) {
       focusedElement.blur()
     }
@@ -451,20 +435,22 @@ const groups = [
     fireInitialEvents()
   }
 
-  const acceptAllButton = cookieConsentElement.querySelector('.agree')! as HTMLButtonElement
-  const preferencesButton = cookieConsentElement.querySelector('.setPreferences')! as HTMLButtonElement
-  const denyButton = cookieConsentElement.querySelector('.deny')! as HTMLButtonElement
+  const cookieConsentElement = document.querySelector('.cookie-consent')
+  const acceptAllButton = cookieConsentElement.querySelector('.agree')
+  const preferencesButton = cookieConsentElement.querySelector('.setPreferences')
+  const denyButton = cookieConsentElement.querySelector('.deny')
   let isPreferencesOpen = false
 
-  ;(function (w: Window, d: Document, s: string, l: string, i: string) {
-    ;(w as any)[l] = (w as any)[l] || []
-    ;(w as any)[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' })
-    const f = d.getElementsByTagName(s)[0]
-    const j = d.createElement(s)
-    const dl = l !== 'dataLayer' ? '&l=' + l : ''
-    ;(j as HTMLScriptElement).async = true
-    ;(j as HTMLScriptElement).src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl
-    f?.parentNode?.insertBefore(j, f)
+  // Initialize GTM
+  ;(function (w, d, s, l, i) {
+    w[l] = w[l] || []
+    w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' })
+    var f = d.getElementsByTagName(s)[0],
+      j = d.createElement(s),
+      dl = l != 'dataLayer' ? '&l=' + l : ''
+    j.async = true
+    j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl
+    f.parentNode.insertBefore(j, f)
   })(window, document, 'script', 'dataLayer', gtmId)
 
   if (getCookie('cookie-consent') === null) {
@@ -479,7 +465,7 @@ const groups = [
     })
     cookieConsentElement.setAttribute('aria-hidden', 'false')
   } else {
-    gtag('consent', 'default', JSON.parse(getCookie('cookie-consent')!))
+    gtag('consent', 'default', JSON.parse(getCookie('cookie-consent')))
     fireInitialEvents()
   }
 
@@ -496,21 +482,18 @@ const groups = [
 
   preferencesButton.addEventListener('click', () => {
     if (!isPreferencesOpen) {
-      ;(cookieConsentElement.querySelector('.header [data-header-initial]') as HTMLElement)!.style.display = 'none'
-      ;(cookieConsentElement.querySelector('.header [data-header-settings]') as HTMLElement)!.style.removeProperty(
-        'display'
-      )
-      ;(cookieConsentElement.querySelector('.settings') as HTMLElement)!.style.removeProperty('display')
+      cookieConsentElement.querySelector('.header [data-header-initial]').style.display = 'none'
+      cookieConsentElement.querySelector('.header [data-header-settings]').style.removeProperty('display')
+      cookieConsentElement.querySelector('.settings').style.removeProperty('display')
       isPreferencesOpen = true
     } else {
       setConsent({
-        necessary: (cookieConsentElement.querySelector('input[id="necessary"]') as HTMLInputElement).checked,
-        marketing: (cookieConsentElement.querySelector('input[id="marketing"]') as HTMLInputElement).checked,
-        analytics: (cookieConsentElement.querySelector('input[id="analytics"]') as HTMLInputElement).checked,
-        preferences: (cookieConsentElement.querySelector('input[id="preferences"]') as HTMLInputElement).checked,
-        conversion_api: (cookieConsentElement.querySelector('input[id="conversion_api"]') as HTMLInputElement).checked,
-        advanced_matching: (cookieConsentElement.querySelector('input[id="advanced_matching"]') as HTMLInputElement)
-          .checked,
+        necessary: cookieConsentElement.querySelector('input[id="necessary"]').checked,
+        marketing: cookieConsentElement.querySelector('input[id="marketing"]').checked,
+        analytics: cookieConsentElement.querySelector('input[id="analytics"]').checked,
+        preferences: cookieConsentElement.querySelector('input[id="preferences"]').checked,
+        conversion_api: cookieConsentElement.querySelector('input[id="conversion_api"]').checked,
+        advanced_matching: cookieConsentElement.querySelector('input[id="advanced_matching"]').checked,
       })
     }
   })
@@ -526,24 +509,22 @@ const groups = [
     })
   })
 
-  const marketingSwitch = cookieConsentElement.querySelector('input[id="marketing"]') as HTMLInputElement
-  const subSwitches = cookieConsentElement.querySelectorAll(
-    '.sub-groups input[type="checkbox"]'
-  ) as NodeListOf<HTMLInputElement>
+  const marketingSwitch = cookieConsentElement.querySelector('input[id="marketing"]')
+  const subSwitches = cookieConsentElement.querySelectorAll('.sub-groups input[type="checkbox"]')
 
   let isMarketingSwitchTriggered = false
 
   marketingSwitch.addEventListener('change', (e) => {
     isMarketingSwitchTriggered = true
     subSwitches.forEach((subSwitch) => {
-      subSwitch.checked = (e.target as HTMLInputElement).checked
+      subSwitch.checked = e.target.checked
     })
     isMarketingSwitchTriggered = false
   })
 
   subSwitches.forEach((subSwitch) => {
     subSwitch.addEventListener('change', (e) => {
-      if (!isMarketingSwitchTriggered && (e.target as HTMLInputElement).checked) {
+      if (!isMarketingSwitchTriggered && e.target.checked) {
         marketingSwitch.checked = true
       }
     })
