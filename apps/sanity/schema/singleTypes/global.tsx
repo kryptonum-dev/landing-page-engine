@@ -13,17 +13,20 @@ export default defineType({
       type: 'string',
       title: 'Email',
       validation: (Rule) => Rule.required().email(),
+      group: 'contact',
     }),
     defineField({
       name: 'tel',
       type: 'string',
       title: 'Phone number (optional)',
+      group: 'contact',
     }),
     defineField({
       name: 'socials',
       type: 'object',
       title: 'Social media',
       options: { collapsible: true },
+      group: 'social',
       fields: [
         defineField({
           name: 'instagram',
@@ -56,6 +59,7 @@ export default defineType({
       type: 'object',
       title: 'Address (optional)',
       options: { columns: 2, collapsible: true },
+      group: 'address',
       fields: [
         defineField({
           name: 'street',
@@ -98,6 +102,7 @@ export default defineType({
       type: 'object',
       title: 'Global SEO',
       validation: (Rule) => Rule.required(),
+      group: 'seo',
       fields: [
         defineField({
           name: 'img',
@@ -120,6 +125,7 @@ export default defineType({
       type: 'object',
       title: 'Organization structured data',
       validation: (Rule) => Rule.required(),
+      group: 'organization',
       description: (
         <>
           Learn more about{' '}
@@ -188,6 +194,77 @@ export default defineType({
         }),
       ],
     }),
+    defineField({
+      name: 'analytics',
+      title: 'Analytics',
+      type: 'object',
+      group: 'analytics',
+      options: { collapsible: true },
+      description:
+        'Configure analytics tracking tools to monitor page performance and user behavior. Leave fields empty to disable tracking.',
+      fields: [
+        defineField({
+          name: 'gtmId',
+          type: 'string',
+          title: 'Google Tag Manager ID',
+          description: 'Format: GTM-XXXXXX. Container ID for managing analytics tools (GA4, Facebook Pixel, etc.).',
+          validation: (Rule) =>
+            Rule.custom((value) => {
+              if (!value) return true
+              if (!/^GTM-[A-Z0-9]{6,}$/.test(value)) {
+                return 'GTM ID must be in format GTM-XXXXXX'
+              }
+              return true
+            }),
+        }),
+        defineField({
+          name: 'metaPixelId',
+          type: 'string',
+          title: 'Meta (Facebook) Pixel ID',
+          description: 'Format: XXXXXXXXXX. Used for Meta Pixel and Conversion API tracking.',
+          validation: (Rule) =>
+            Rule.custom((value) => {
+              if (!value) return true
+              if (!/^\d{15,16}$/.test(value)) {
+                return 'Meta Pixel ID must be a 15-16 digit number'
+              }
+              return true
+            }),
+        }),
+        defineField({
+          name: 'metaConversionToken',
+          type: 'string',
+          title: 'Meta Conversion API Token',
+          description: 'Secret token for server-side Meta Conversion API tracking.',
+        }),
+      ],
+    }),
+  ],
+  groups: [
+    {
+      name: 'contact',
+      title: '📞 Contact Information',
+    },
+    {
+      name: 'social',
+      title: '🔗 Social Media',
+    },
+    {
+      name: 'address',
+      title: '📍 Address',
+    },
+    {
+      name: 'seo',
+      title: '🔍 SEO',
+    },
+    {
+      name: 'organization',
+      title: '🏢 Organization',
+    },
+    {
+      name: 'analytics',
+      title: '📊 Analytics',
+    },
   ],
   preview: {
     prepare: () => ({

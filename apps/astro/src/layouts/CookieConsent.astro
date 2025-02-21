@@ -326,7 +326,7 @@ const groups = [
     window.dataLayer.push(arguments)
   }
 
-  const initialPageLoadTime = Math.floor(Date.now() / 1000)
+  const timestamp = Math.floor(Date.now() / 1000)
 
   gtag('set', additionalData)
 
@@ -341,13 +341,6 @@ const groups = [
     document.cookie = `${name}=${encodeURIComponent(value)}${expires}; SameSite=Strict`
   }
 
-  function formatMetaEventName(eventName) {
-    return eventName
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join('')
-  }
-
   async function sendConversion(eventData) {
     const cookieConsent = getCookie('cookie-consent')
     if (!cookieConsent) return
@@ -355,25 +348,14 @@ const groups = [
     const consentSettings = JSON.parse(decodeURIComponent(cookieConsent))
     if (consentSettings.conversion_api !== 'granted') return
 
-    try {
-      const response = await fetch('/api/meta-conversions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...eventData,
-          eventName: formatMetaEventName(eventData.eventName),
-        }),
-      })
-      if (!response.ok) {
-        const data = await response.json()
-        console.warn('Meta conversion event failed:', data.message)
-      }
-    } catch (error) {
-      console.warn('Failed to send Meta conversion event:', error)
-    }
+    await fetch('/api/meta-conversions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(eventData),
+    })
   }
 
-  function trackEvent(eventName, customData = {}, timestamp = Math.floor(Date.now() / 1000)) {
+  function trackEvent(eventName, customData = {}) {
     const event_id = crypto.randomUUID()
     const event_time = timestamp
 
@@ -398,15 +380,8 @@ const groups = [
   }
 
   function fireInitialEvents() {
-    trackEvent(
-      'page_view',
-      {
-        page_location: window.location.href,
-        page_path: window.location.pathname,
-      },
-      initialPageLoadTime
-    )
-    trackEvent('view_content', {}, initialPageLoadTime)
+    trackEvent('PageView')
+    trackEvent('ViewContent')
   }
 
   function setConsent(consent) {
@@ -462,6 +437,8 @@ const groups = [
       ad_personalization: 'denied',
       analytics_storage: 'denied',
       personalization_storage: 'denied',
+      conversion_api: 'denied',
+      advanced_matching: 'denied',
     })
     cookieConsentElement.setAttribute('aria-hidden', 'false')
   } else {
